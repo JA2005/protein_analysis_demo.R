@@ -1,0 +1,65 @@
+############################################################
+library(Biostrings) # Bioconductor: alternate string handling
+
+# ---- Input: change this sequence to your protein of interest ----
+protein_seq <- "MVKVYAPASSANMSVGFDVLGAAVTPVDGALLGDVVTVEAAETFSLNNLGQKL"
+
+# ---- Helper: clean sequence (uppercase, letters only) ----
+protein_seq <- toupper(gsub("[^A-Z]", "", protein_seq))
+
+# ---- Basic Information ----
+cat("Protein Sequence:\n", protein_seq, "\n\n")
+cat("Sequence Length:", nchar(protein_seq), "\n\n")
+
+# ---- Amino Acid Composition (Peptides: aaComp) ----
+composition <- aaComp(protein_seq)
+cat("Amino Acid Composition (counts):\n")
+print(composition)
+
+# ---- Molecular Weight and pI ----
+mw_val <- mw(protein_seq)
+pi_val <- pI(protein_seq)
+cat(sprintf('\nMolecular Weight (Da): %.3f\n', mw_val))
+cat(sprintf('Theoretical pI: %.3f\n', pi_val))
+
+# ---- Hydrophobicity (Kyte-Doolittle) ----
+hydro <- hydrophobicity(protein_seq, scale = "KyteDoolittle")
+cat(sprintf('Average Hydrophobicity: %.3f\n', mean(hydro)))
+
+# ---- Visualization ----
+# Save plots to a PNG file
+png(filename = "hydrophobicity_profile.png", width = 800, height = 480)
+plot(hydro, type = "l", lwd = 2,
+main = "Hydrophobicity Profile",
+xlab = "Residue Position", ylab = "Hydrophobicity")
+dev.off()
+
+png(filename = "aa_composition_barplot.png", width = 800, height = 480)
+barplot(as.numeric(composition),
+names.arg = names(composition),
+las = 2, cex.names = 0.8,
+main = "Amino Acid Composition",
+ylab = "Frequency")
+dev.off()
+
+# ---- Save summary CSV ----
+summary_data <- data.frame(
+Sequence = protein_seq,
+Length = nchar(protein_seq),
+Molecular_Weight = round(mw_val, 3),
+pI = round(pi_val, 3),
+Average_Hydrophobicity = round(mean(hydro), 3)
+)
+
+write.csv(summary_data, "protein_summary.csv", row.names = FALSE)
+cat('\n✅ Summary saved to protein_summary.csv\n')
+cat('✅ Plots saved to hydrophobicity_profile.png and aa_composition_barplot.png\n')
+
+# ---- Optional: use Biostrings for sequence operations ----
+# Example: convert to AAString and compute a basic alphabet frequency
+aa <- AAString(protein_seq)
+alphabet_freq <- alphabetFrequency(aa, baseOnly = TRUE)
+cat('\nAlphabet frequency from Biostrings (AAs present):\n')
+print(alphabet_freq[alphabet_freq > 0])
+
+# End of script
